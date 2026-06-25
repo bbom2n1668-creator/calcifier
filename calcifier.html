@@ -541,6 +541,7 @@
         // 6. MCP 실시간 폴링 (GET → KV 상태 읽기)
         // Claude가 MCP tool을 호출하면 KV에 상태가 저장되고, 브라우저가 2초마다 읽어 UI를 갱신합니다.
         let pollingInterval = null;
+        let lastStateStr = null;
         const btnTogglePoll = document.getElementById('togglePoll');
         const elWorkerUrl = document.getElementById('workerUrl');
 
@@ -551,14 +552,15 @@
             try {
                 const res = await fetch(`${baseUrl}/state`);
                 if (!res.ok) return;
-                const serverState = await res.json();
-                if (serverState && Object.keys(serverState).length > 0) {
-                    // 배터리는 로컬 시뮬레이션 값을 유지 (서버는 밝기/모드 등만 덮어씀)
-                    const localBattery = state.battery;
-                    state = { ...state, ...serverState };
-                    state.battery = localBattery;
-                    applyStateToUi();
-                }
+                const text = await res.text();
+                if (text === '{}' || text === lastStateStr) return;
+                lastStateStr = text;
+                const serverState = JSON.parse(text);
+                // 배터리는 로컬 시뮬레이션 값을 유지 (서버는 밝기/모드 등만 덮어씀)
+                const localBattery = state.battery;
+                state = { ...state, ...serverState };
+                state.battery = localBattery;
+                applyStateToUi();
             } catch (error) {
                 console.error("MCP 동기화 오류:", error);
             }
