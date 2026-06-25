@@ -1,0 +1,16 @@
+name = "calcifier"
+main = "src/index.ts"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[[kv_namespaces]]
+binding = "MY_KV"
+id = "KV_네임스페이스_ID"
+
+[[durable_objects.bindings]]
+name = "MCP_OBJECT"
+class_name = "CalcifierMCP"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["CalcifierMCP"]

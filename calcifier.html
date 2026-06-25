@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calcifer 가상기기 쇼룸 목업</title>
+    <style>
+        :root {
+            --bg-color: #0c0c14;
+            --lamp-color: #FF9529;
+            --brightness: 40%;
+        }
+
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: var(--bg-color);
+            color: #e0e0e0;
+            font-family: 'Malgun Gothic', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #fff;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .container {
+            display: flex;
+            width: 1000px;
+            max-width: 100%;
+            background: #181824;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* 왼쪽 컨트롤 패널 */
+        .control-panel {
+            width: 45%;
+            padding: 30px;
+            border-right: 1px solid #2a2a3a;
+            box-sizing: border-box;
+        }
+
+        /* 오른쪽 비주얼 패널 */
+        .visual-panel {
+            width: 55%;
+            background-color: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            padding: 30px;
+            box-sizing: border-box;
+            transition: background-color 0.5s;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 14px;
+            margin-bottom: 8px;
+            color: #aaa;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            padding: 8px;
+            background: #252538;
+            border: 1px solid #3a3a52;
+            color: #fff;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+
+        .radio-group, .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .radio-group label, .btn-group label {
+            flex: 1;
+            min-width: 80px;
+            background: #252538;
+            border: 1px solid #3a3a52;
+            padding: 10px;
+            text-align: center;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #ccc;
+            margin: 0;
+            transition: all 0.2s;
+        }
+
+        .radio-group input[type="radio"], .btn-group input[type="radio"] {
+            display: none;
+        }
+
+        .radio-group input[type="radio"]:checked + label,
+        .btn-group input[type="radio"]:checked + label {
+            background: #4f46e5;
+            border-color: #6366f1;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        /* 전원 스위치 */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #3a3a52; transition: .4s; border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #10b981; }
+        input:checked + .slider:before { transform: translateX(26px); }
+
+        .range-val {
+            float: right;
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        /* 배터리 UI 전용 스타일 */
+        .battery-display {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #252538;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #3a3a52;
+        }
+        .battery-gauge {
+            font-size: 18px;
+            font-weight: bold;
+            color: #10b981;
+        }
+        .battery-gauge.low { color: #ef4444; }
+        .charge-btn {
+            background: #10b981;
+            border: none;
+            color: white;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .charge-btn:hover { background: #059669; }
+
+        /* 하단 디버깅 패널 */
+        .debug-panel {
+            width: 1000px;
+            max-width: 100%;
+            margin-top: 20px;
+            background: #11111a;
+            padding: 15px;
+            border-radius: 8px;
+            box-sizing: border-box;
+        }
+        .debug-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .debug-row input {
+            flex: 1;
+            padding: 8px;
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            border-radius: 4px;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #00ff66;
+            overflow-x: auto;
+            margin: 0;
+        }
+
+        /* 🔈 초기 오디오 권한 허용 팝업 (CSS 오버레이) */
+        .audio-popup-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.3s ease;
+        }
+        .audio-popup {
+            background: #1e1e2f;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            max-width: 400px;
+            border: 1px solid #4f46e5;
+        }
+        .audio-popup h2 { margin-top: 0; color: #fff; }
+        .audio-popup p { color: #aaa; font-size: 14px; line-height: 1.5; margin-bottom: 25px; }
+        .popup-btn {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+        }
+        .popup-btn:hover { background: #6366f1; }
+    </style>
+</head>
+<body>
+
+    <div class="audio-popup-overlay" id="audioPopup">
+        <div class="audio-popup">
+            <h2>🔥 오일램프 가상 쇼룸</h2>
+            <p>본 페이지는 시각 효과와 함께 '장작 타는 감성 오디오 소리'를 실시간으로 사용합니다. 최고의 경험을 위해 동의 후 입장해 주세요.</p>
+            <button class="popup-btn" id="btnAudioOk">Okay, 입장하기</button>
+        </div>
+    </div>
+
+    <h1>Calcifer 가상 디바이스 쇼룸 (MCP 연동 목업)</h1>
+
+    <div class="container">
+        <div class="control-panel">
+            <div class="form-group">
+                <label>⛺ 텐트 크기</label>
+                <div class="radio-group">
+                    <input type="radio" id="tent1" name="tentSize" value="1인용" checked>
+                    <label for="tent1">1인용</label>
+                    <input type="radio" id="tent2" name="tentSize" value="2인용">
+                    <label for="tent2">2인용</label>
+                    <input type="radio" id="tent3" name="tentSize" value="3~4인용">
+                    <label for="tent3">3~4인용</label>
+                    <input type="radio" id="tent4" name="tentSize" value="5인 이상">
+                    <label for="tent4">5인 이상</label>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; justify-content: space-between;">
+                <label style="margin: 0;">🔌 전원 ON / OFF</label>
+                <label class="switch">
+                    <input type="checkbox" id="power" checked>
+                    <span class="slider"></span>
+                </label>
+            </div>
+
+            <div class="form-group">
+                <label>🔋 배터리 잔량 (밝기에 따라 감소 속도 가변)</label>
+                <div class="battery-display">
+                    <span id="battery-gauge" class="battery-gauge">80.0%</span>
+                    <button class="charge-btn" id="btnCharge">⚡ 100% 충전</button>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>💡 조명 밝기 <span id="brightness-val" class="range-val">40%</span></label>
+                <input type="range" id="brightness" min="0" max="100" value="40">
+            </div>
+
+            <div class="form-group">
+                <label>🌡️ 색온도</label>
+                <div class="btn-group">
+                    <input type="radio" id="ct2700" name="colorTemp" value="2700" checked>
+                    <label for="ct2700">2700K (전구)</label>
+                    <input type="radio" id="ct5500" name="colorTemp" value="5500">
+                    <label for="ct5500">5500K (주백)</label>
+                    <input type="radio" id="ct6000" name="colorTemp" value="6000">
+                    <label for="ct6000">6000K (주광)</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>⚙️ 현재 모드</label>
+                <div class="btn-group">
+                    <input type="radio" id="mNormal" name="mode" value="일반" checked>
+                    <label for="mNormal">일반</label>
+                    <input type="radio" id="mSleep" name="mode" value="취침">
+                    <label for="mSleep">취침</label>
+                    <input type="radio" id="mRead" name="mode" value="독서">
+                    <label for="mRead">독서</label>
+                    <input type="radio" id="mWake" name="mode" value="기상">
+                    <label for="mWake">기상</label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>🔊 장작 모닥불 볼륨 <span id="volume-val" class="range-val">30%</span></label>
+                <input type="range" id="volume" min="0" max="100" value="30">
+            </div>
+        </div>
+
+        <div class="visual-panel" id="visual-panel">
+            <svg width="400" height="400" viewBox="0 0 400 400" style="position: absolute; z-index: 1;">
+                <defs>
+                    <radialGradient id="lampGlow" cx="50%" cy="50%" r="50%">
+                        <stop id="stop0" offset="0%" stop-color="var(--lamp-color)" stop-opacity="1" />
+                        <stop id="stop1" offset="20%" stop-color="var(--lamp-color)" stop-opacity="0.7" />
+                        <stop id="stop2" offset="40%" stop-color="var(--lamp-color)" stop-opacity="0.4" />
+                        <stop id="stop3" offset="60%" stop-color="var(--lamp-color)" stop-opacity="0.2" />
+                        <stop id="stop4" offset="80%" stop-color="var(--lamp-color)" stop-opacity="0.08" />
+                        <stop id="stop5" offset="100%" stop-color="var(--lamp-color)" stop-opacity="0" />
+                    </radialGradient>
+                </defs>
+                
+                <circle id="glowCircle" cx="200" cy="200" r="180" fill="url(#lampGlow)" />
+
+                <g transform="translate(175, 160)" stroke="#ffffff" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M 10,0 A 15,15 0 0,1 40,0" stroke-width="2" />
+                    <path d="M 5,0 L 45,0 L 40,-8 L 10,-8 Z" fill="#222" />
+                    <rect x="8" y="0" width="34" height="50" rx="4" />
+                    <path d="M 25,15 L 25,35" stroke="var(--lamp-color)" stroke-width="4" id="svg-wick" />
+                    <path d="M 3,50 L 47,50 L 45,65 L 5,65 Z" fill="#333" />
+                </g>
+            </svg>
+        </div>
+    </div>
+
+    <div class="debug-panel">
+        <div class="debug-row">
+            <label style="white-space: nowrap; margin:0;">🌐 MCP Worker URL:</label>
+            <input type="text" id="workerUrl" value="https://your-project.username.workers.dev" placeholder="배포한 서버 주소 입력">
+            <button id="togglePoll" style="padding: 8px 15px; background: #4f46e5; border:none; color:white; border-radius:4px; cursor:pointer;">실시간 폴링 시작</button>
+        </div>
+        <label>📊 동기화 중인 현재 상태 JSON 데이터:</label>
+        <pre id="jsonViewer">{}</pre>
+    </div>
+
+    <audio id="bgAudio" src="sound.mp3" loop></audio>
+
+    <script>
+        // 1. 상태 변수 로드 (로컬 스토리지에 세이브 데이터가 있으면 불러옴)
+        let defaultState = {
+            tentSize: "1인용",
+            power: true,
+            battery: 80.0, // 소수점 트래킹 반영
+            brightness: 40,
+            colorTemp: 2700,
+            mode: "일반",
+            volume: 30
+        };
+
+        let savedState = localStorage.getItem('calcifer_showroom_state');
+        let state = savedState ? JSON.parse(savedState) : defaultState;
+
+        const colorMap = { 2700: "#FF9529", 5500: "#F4F4F4", 6000: "#D6E4FF" };
+
+        // UI 엘리먼트 캐시
+        const elPower = document.getElementById('power');
+        const elBatteryGauge = document.getElementById('battery-gauge');
+        const elBrightness = document.getElementById('brightness');
+        const elVolume = document.getElementById('volume');
+        const elJsonViewer = document.getElementById('jsonViewer');
+        const elGlowCircle = document.getElementById('glowCircle');
+        const elSvgWick = document.getElementById('svg-wick');
+        const elVisualPanel = document.getElementById('visual-panel');
+        const bgAudio = document.getElementById('bgAudio');
+
+        // 2. 오디오 볼륨 매핑 제어 함수
+        function updateAudioVolume() {
+            if (!state.power || state.battery <= 0) {
+                bgAudio.volume = 0;
+            } else {
+                bgAudio.volume = state.volume / 100;
+            }
+        }
+
+        // 3. 비주얼 렌더링 동기화 함수
+        function updateVisuals() {
+            // 로컬 스토리지 실시간 백업 (리로드 대응)
+            localStorage.setItem('calcifer_showroom_state', JSON.stringify(state));
+
+            // 배터리 렌더링 및 위험 수위 피드백
+            elBatteryGauge.textContent = state.battery.toFixed(1) + "%";
+            if (state.battery <= 20) {
+                elBatteryGauge.classList.add('low');
+            } else {
+                elBatteryGauge.classList.remove('low');
+            }
+
+            // 전원 꺼짐 조건 (스위치가 꺼졌거나 배터리가 아웃되었을 때)
+            if (!state.power || state.battery <= 0) {
+                document.documentElement.style.setProperty('--lamp-color', '#333333');
+                elGlowCircle.style.display = 'none';
+                elSvgWick.setAttribute('stroke', '#555555');
+                elVisualPanel.style.backgroundColor = '#050508';
+                updateAudioVolume();
+                elJsonViewer.textContent = JSON.stringify(state, null, 2);
+                return;
+            }
+
+            elGlowCircle.style.display = 'block';
+            const hexColor = colorMap[state.colorTemp] || "#FF9529";
+            document.documentElement.style.setProperty('--lamp-color', hexColor);
+            elSvgWick.setAttribute('stroke', hexColor);
+
+            const bIdx = state.brightness / 100;
+            const stop1 = document.getElementById('stop1');
+            const stop2 = document.getElementById('stop2');
+            const stop3 = document.getElementById('stop3');
+            const stop4 = document.getElementById('stop4');
+            const stop5 = document.getElementById('stop5');
+
+            stop1.setAttribute('offset', `${Math.min(20, 5 + bIdx * 15)}%`);
+            stop2.setAttribute('offset', `${Math.min(40, 10 + bIdx * 30)}%`);
+            stop3.setAttribute('offset', `${Math.min(60, 15 + bIdx * 45)}%`);
+            stop4.setAttribute('offset', `${Math.min(80, 20 + bIdx * 60)}%`);
+            stop5.setAttribute('offset', `${Math.min(100, 25 + bIdx * 75)}%`);
+
+            elGlowCircle.style.opacity = Math.max(0.1, bIdx);
+            elVisualPanel.style.backgroundColor = 'var(--bg-color)';
+            
+            updateAudioVolume();
+            elJsonViewer.textContent = JSON.stringify(state, null, 2);
+        }
+
+        // 4. 🔋 가변 배터리 소모 시뮬레이터 (1초마다 정밀 연산)
+        // 교수님 수식: 밝기 100%일 때 분당 2% (초당 0.0333%), 밝기 10%일 때 분당 0.2% (초당 0.00333%)
+        setInterval(() => {
+            if (state.power && state.battery > 0) {
+                // 밝기에 비례하는 소모량 공식 유도 (초당 소모율)
+                const baseConsumptionPerSecond = 2 / 60; // 100% 밝기일 때 초당 약 0.0333% 감소
+                const currentRatio = state.brightness / 100;
+                const actualLoss = baseConsumptionPerSecond * currentRatio;
+
+                state.battery = Math.max(0, state.battery - actualLoss);
+
+                // 배터리가 방전되면 강제 전원 Off 트리거
+                if (state.battery === 0) {
+                    state.power = false;
+                    elPower.checked = false;
+                }
+                updateVisuals();
+            }
+        }, 1000);
+
+        // 5. Autoplay 제어용 팝업 인터랙션
+        document.getElementById('btnAudioOk').addEventListener('click', () => {
+            document.getElementById('audioPopup').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('audioPopup').style.display = 'none';
+                // 브라우저 락이 풀린 즉시 오디오 재생 시작
+                bgAudio.play().catch(e => console.log("오디오 재생 거부:", e));
+                updateAudioVolume();
+            }, 300);
+        });
+
+        // ⚡ 충전 버튼 액션
+        document.getElementById('btnCharge').addEventListener('click', () => {
+            state.battery = 100.0;
+            updateVisuals();
+        });
+
+        // 입력 컨트롤 핸들러 목록
+        document.querySelectorAll('input[name="tentSize"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.tentSize = e.target.value;
+                if (state.tentSize === "1인용") state.brightness = 25;
+                else if (state.tentSize === "2인용") state.brightness = 50;
+                else if (state.tentSize === "3~4인용") state.brightness = 75;
+                else if (state.tentSize === "5인 이상") state.brightness = 100;
+                
+                elBrightness.value = state.brightness;
+                document.getElementById('brightness-val').textContent = state.brightness + "%";
+                updateVisuals();
+            });
+        });
+
+        elPower.addEventListener('change', (e) => {
+            state.power = e.target.checked;
+            updateVisuals();
+        });
+
+        elBrightness.addEventListener('input', (e) => {
+            state.brightness = parseInt(e.target.value);
+            document.getElementById('brightness-val').textContent = state.brightness + "%";
+            updateVisuals();
+        });
+
+        document.querySelectorAll('input[name="colorTemp"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.colorTemp = parseInt(e.target.value);
+                updateVisuals();
+            });
+        });
+
+        document.querySelectorAll('input[name="mode"]').forEach(radio => {
+            radio.addEventListener('change', (e) => {
+                state.mode = e.target.value;
+                if(state.mode === "취침") {
+                    state.brightness = 10; state.colorTemp = 2700; state.volume = 10;
+                } else if(state.mode === "독서") {
+                    state.brightness = 80; state.colorTemp = 5500;
+                } else if(state.mode === "기상") {
+                    state.brightness = 95; state.colorTemp = 6000; state.volume = 0;
+                }
+                elBrightness.value = state.brightness;
+                document.getElementById('brightness-val').textContent = state.brightness + "%";
+                document.getElementById(`ct${state.colorTemp}`).checked = true;
+                elVolume.value = state.volume;
+                document.getElementById('volume-val').textContent = state.volume + "%";
+                updateVisuals();
+            });
+        });
+
+        elVolume.addEventListener('input', (e) => {
+            state.volume = parseInt(e.target.value);
+            document.getElementById('volume-val').textContent = state.volume + "%";
+            updateVisuals();
+        });
+
+        // 6. MCP 실시간 폴링 (GET → KV 상태 읽기)
+        // Claude가 MCP tool을 호출하면 KV에 상태가 저장되고, 브라우저가 2초마다 읽어 UI를 갱신합니다.
+        let pollingInterval = null;
+        const btnTogglePoll = document.getElementById('togglePoll');
+        const elWorkerUrl = document.getElementById('workerUrl');
+
+        async function syncWithMcp() {
+            const baseUrl = elWorkerUrl.value.trim();
+            if (!baseUrl) return;
+
+            try {
+                const res = await fetch(`${baseUrl}/state`);
+                if (!res.ok) return;
+                const serverState = await res.json();
+                if (serverState && Object.keys(serverState).length > 0) {
+                    // 배터리는 로컬 시뮬레이션 값을 유지 (서버는 밝기/모드 등만 덮어씀)
+                    const localBattery = state.battery;
+                    state = { ...state, ...serverState };
+                    state.battery = localBattery;
+                    applyStateToUi();
+                }
+            } catch (error) {
+                console.error("MCP 동기화 오류:", error);
+            }
+        }
+
+        function applyStateToUi() {
+            elPower.checked = state.power;
+            elBrightness.value = state.brightness;
+            document.getElementById('brightness-val').textContent = state.brightness + "%";
+            elVolume.value = state.volume;
+            document.getElementById('volume-val').textContent = state.volume + "%";
+            
+            const targetTent = document.querySelector(`input[name="tentSize"][value="${state.tentSize}"]`);
+            if(targetTent) targetTent.checked = true;
+            
+            const targetCt = document.getElementById(`ct${state.colorTemp}`);
+            if(targetCt) targetCt.checked = true;
+            
+            const targetMode = document.querySelector(`input[name="mode"][value="${state.mode}"]`);
+            if(targetMode) targetMode.checked = true;
+
+            updateVisuals();
+        }
+
+        btnTogglePoll.addEventListener('click', () => {
+            if (pollingInterval) {
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+                btnTogglePoll.textContent = "실시간 폴링 시작";
+                btnTogglePoll.style.background = "#4f46e5";
+            } else {
+                pollingInterval = setInterval(syncWithMcp, 2000);
+                btnTogglePoll.textContent = "실시간 폴링 중단";
+                btnTogglePoll.style.background = "#ef4444";
+            }
+        });
+
+        // 화면 로드 즉시 인터페이스 복구 초기화
+        applyStateToUi();
+    </script>
+</body>
+</html>
