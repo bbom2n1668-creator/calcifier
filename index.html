@@ -813,6 +813,139 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
   transition: width 0.65s ease;
 }
 
+
+/* ── AMBIENT SOUND BUTTON ── */
+#sound-btn {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 999;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(20, 15, 8, 0.85);
+  border: 1.5px solid rgba(255, 122, 0, 0.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 0 rgba(255,122,0,0);
+  transition: transform 0.25s, box-shadow 0.25s, border-color 0.3s;
+  font-size: 22px;
+  line-height: 1;
+  user-select: none;
+}
+#sound-btn:hover {
+  transform: scale(1.1);
+  border-color: rgba(255, 122, 0, 0.9);
+  box-shadow: 0 6px 28px rgba(0,0,0,0.4), 0 0 18px rgba(255,122,0,0.3);
+}
+#sound-btn.playing {
+  border-color: #FF7A00;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 6px rgba(255,122,0,0.15);
+  animation: soundPulse 2.5s ease-in-out infinite;
+}
+@keyframes soundPulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 4px rgba(255,122,0,0.12); }
+  50%       { box-shadow: 0 4px 20px rgba(0,0,0,0.35), 0 0 0 10px rgba(255,122,0,0.06); }
+}
+
+/* 툴팁 */
+#sound-tooltip {
+  position: fixed;
+  bottom: 96px;
+  right: 32px;
+  z-index: 998;
+  background: rgba(20,15,8,0.92);
+  border: 1px solid rgba(255,122,0,0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  color: #fff;
+  font-size: 12px;
+  line-height: 1.6;
+  max-width: 200px;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+  opacity: 0;
+  transform: translateY(8px);
+  transition: opacity 0.4s ease, transform 0.4s ease;
+  pointer-events: none;
+}
+#sound-tooltip.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+#sound-tooltip strong {
+  display: block;
+  color: #FF7A00;
+  margin-bottom: 4px;
+  font-size: 13px;
+}
+
+
+/* ── VIRTUAL DEVICE SECTION ── */
+#virtual-section {
+  background: #0a0604;
+  padding: 80px 0 0;
+  overflow: hidden;
+}
+
+.virtual-header {
+  text-align: center;
+  padding: 0 40px 48px;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.virtual-header.visible { opacity: 1; transform: translateY(0); }
+
+.virtual-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #FF7A00; margin-bottom: 10px;
+}
+.virtual-title {
+  font-size: clamp(28px, 3.5vw, 48px); font-weight: 700;
+  color: #fff; margin-bottom: 14px; letter-spacing: -0.01em;
+}
+.virtual-desc {
+  font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7;
+}
+
+/* iframe 래퍼 */
+.virtual-iframe-wrap {
+  position: relative;
+  width: 100%;
+  /* 실제 가상기기 페이지 비율에 맞게 */
+  padding-bottom: 75%;
+  background: #111;
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.9s ease 0.2s, transform 0.9s ease 0.2s;
+}
+.virtual-iframe-wrap.visible { opacity: 1; transform: translateY(0); }
+
+.virtual-iframe-wrap iframe {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  /* 주변 페이지와 자연스럽게 어우러지도록 */
+  filter: brightness(0.97);
+}
+
+/* 상단 페이드 오버레이 — 섹션과 자연스럽게 연결 */
+.virtual-fade-top {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(to bottom, #0a0604, transparent);
+  pointer-events: none;
+  z-index: 2;
+}
+
 </style>
 </head>
 <body>
@@ -1199,6 +1332,32 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
   </div>
 </section>
 
+<!-- VIRTUAL DEVICE -->
+<section id="virtual-section">
+
+  <div class="virtual-header" id="virtual-header">
+    <p class="virtual-eyebrow">Interactive Experience</p>
+    <h2 class="virtual-title">가상기기 체험</h2>
+    <p class="virtual-desc">
+      실제 Calcifer를 직접 조작해보세요.<br>
+      조명 밝기, 색온도, 모드, 볼륨을 자유롭게 제어할 수 있습니다.
+    </p>
+  </div>
+
+  <div class="virtual-iframe-wrap" id="virtual-iframe-wrap">
+    <div class="virtual-fade-top"></div>
+    <iframe
+      src="https://caffeineworks-ai.github.io/calcifier/calcifier.html"
+      title="Calcifer 가상기기"
+      allow="autoplay; fullscreen"
+      loading="lazy"
+      scrolling="no">
+    </iframe>
+  </div>
+
+</section>
+
+
 
 
 
@@ -1247,7 +1406,7 @@ window.addEventListener('scroll', () => {
 
 // 스크롤 리빌
 const revEls = document.querySelectorAll(
-  '.reveal,.reveal-left,.reveal-right,.reveal-title,.reveal-up,.insight-label,.bg-label,.bg-main-copy,.bg-sub-copy,.concept-label,.concept-main-copy,.concept-sub-copy,.product-logo-overlay,.mode-label-item,.mode-card,.dim-label,.dim-specs,.dim-img-wrap,.cmf-panel,.moments-header'
+  '.reveal,.reveal-left,.reveal-right,.reveal-title,.reveal-up,.insight-label,.bg-label,.bg-main-copy,.bg-sub-copy,.concept-label,.concept-main-copy,.concept-sub-copy,.product-logo-overlay,.mode-label-item,.mode-card,.dim-label,.dim-specs,.dim-img-wrap,.cmf-panel,.moments-header,.virtual-header,.virtual-iframe-wrap'
 );
 const revObs = new IntersectionObserver((entries) => {
   entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
@@ -1444,6 +1603,187 @@ new IntersectionObserver((entries) => {
   }, {threshold:0.3}).observe(document.getElementById('moments-section'));
 })();
 
+
+// ── AMBIENT CAMPFIRE SOUND ──
+(function() {
+  let audioCtx = null;
+  let masterGain = null;
+  let isPlaying = false;
+  let nodes = [];
+  let tooltipTimer = null;
+
+  const btn = document.getElementById('sound-btn');
+  const tooltip = document.getElementById('sound-tooltip');
+
+  // 첫 방문 시 툴팁 자동 표시
+  setTimeout(() => {
+    tooltip.classList.add('show');
+    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 4000);
+  }, 2500);
+
+  btn.addEventListener('mouseenter', () => {
+    clearTimeout(tooltipTimer);
+    tooltip.classList.add('show');
+  });
+  btn.addEventListener('mouseleave', () => {
+    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 800);
+  });
+
+  function initAudio() {
+    if (audioCtx) return;
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    masterGain.connect(audioCtx.destination);
+  }
+
+  // ── 화이트/브라운 노이즈 (장작 베이스 소리)
+  function createCrackleNoise() {
+    const bufferSize = audioCtx.sampleRate * 4;
+    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+    const data = buffer.getChannelData(0);
+
+    let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
+    for (let i = 0; i < bufferSize; i++) {
+      const white = Math.random() * 2 - 1;
+      // 핑크 노이즈 (장작 타는 소리에 가까운 스펙트럼)
+      b0 = 0.99886*b0 + white*0.0555179;
+      b1 = 0.99332*b1 + white*0.0750759;
+      b2 = 0.96900*b2 + white*0.1538520;
+      b3 = 0.86650*b3 + white*0.3104856;
+      b4 = 0.55000*b4 + white*0.5329522;
+      b5 = -0.7616*b5 - white*0.0168980;
+      data[i] = (b0+b1+b2+b3+b4+b5+b6 + white*0.5362) * 0.11;
+      b6 = white * 0.115926;
+    }
+
+    const source = audioCtx.createBufferSource();
+    source.buffer = buffer;
+    source.loop = true;
+
+    // 저음 강조 (장작 불 느낌)
+    const lowpass = audioCtx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.value = 800;
+    lowpass.Q.value = 0.8;
+
+    const highpass = audioCtx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.value = 60;
+
+    // 게인
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.55;
+
+    source.connect(lowpass);
+    lowpass.connect(highpass);
+    highpass.connect(gain);
+    gain.connect(masterGain);
+    source.start();
+    return { source, gain };
+  }
+
+  // ── 팝 & 크랙클 (장작 튀는 소리)
+  function scheduleCrackle() {
+    if (!isPlaying) return;
+
+    const now = audioCtx.currentTime;
+    // 랜덤 주파수의 짧은 버스트
+    const osc = audioCtx.createOscillator();
+    const oscGain = audioCtx.createGain();
+    const filter = audioCtx.createBiquadFilter();
+
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(80 + Math.random() * 200, now);
+    osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
+
+    filter.type = 'bandpass';
+    filter.frequency.value = 300 + Math.random() * 400;
+    filter.Q.value = 0.5;
+
+    const vol = 0.03 + Math.random() * 0.06;
+    oscGain.gain.setValueAtTime(vol, now);
+    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06 + Math.random() * 0.1);
+
+    osc.connect(filter);
+    filter.connect(oscGain);
+    oscGain.connect(masterGain);
+
+    osc.start(now);
+    osc.stop(now + 0.15);
+
+    // 다음 크랙클 예약 (불규칙 간격)
+    const nextTime = 0.15 + Math.random() * 0.9;
+    setTimeout(scheduleCrackle, nextTime * 1000);
+  }
+
+  // ── 사운드 시작
+  function startSound() {
+    initAudio();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    // 베이스 노이즈
+    const crackle = createCrackleNoise();
+    nodes.push(crackle);
+
+    // 볼륨 페이드인
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0.9, audioCtx.currentTime + 2.5);
+
+    // 크랙클 시작
+    setTimeout(scheduleCrackle, 800);
+
+    isPlaying = true;
+    btn.classList.add('playing');
+    btn.textContent = '🔊';
+    tooltip.classList.remove('show');
+  }
+
+  // ── 사운드 정지
+  function stopSound() {
+    if (!audioCtx) return;
+
+    // 볼륨 페이드아웃
+    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
+    masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
+    masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
+
+    setTimeout(() => {
+      nodes.forEach(n => {
+        try { n.source.stop(); } catch(e) {}
+      });
+      nodes = [];
+    }, 1600);
+
+    isPlaying = false;
+    btn.classList.remove('playing');
+    btn.textContent = '🔥';
+  }
+
+  // ── 버튼 토글
+  btn.addEventListener('click', () => {
+    if (isPlaying) {
+      stopSound();
+    } else {
+      startSound();
+    }
+  });
+
+  // 페이지 벗어날 때 정지
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden && isPlaying) stopSound();
+  });
+})();
+
 </script>
+
+<!-- AMBIENT SOUND BUTTON -->
+<button id="sound-btn" title="장작 소리 켜기/끄기">🔥</button>
+<div id="sound-tooltip">
+  <strong>🔥 불멍 사운드</strong>
+  버튼을 눌러<br>장작 소리를 켜보세요
+</div>
+
 </body>
 </html>
