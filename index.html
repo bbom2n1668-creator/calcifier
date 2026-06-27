@@ -946,6 +946,41 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
   z-index: 2;
 }
 
+
+/* ── VIRTUAL DEVICE 제품 이미지 오버레이 ── */
+.virtual-iframe-wrap {
+  position: relative;
+}
+/* iframe 오른쪽 절반 위에 실제 제품 이미지 오버레이 */
+.virtual-product-overlay {
+  position: absolute;
+  /* 가상기기 오른쪽 영역에 배치 — 스크린샷 기준 우측 40% */
+  right: 0;
+  top: 0;
+  width: 42%;
+  height: 100%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;  /* 클릭은 iframe으로 통과 */
+  background: #0d0d0d;   /* 기존 검정 배경과 동일하게 */
+}
+.virtual-product-overlay img {
+  width: 62%;
+  height: auto;
+  object-fit: contain;
+  /* 제품 이미지 흰 배경 제거 효과 */
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 20px 60px rgba(255,140,30,0.35))
+          drop-shadow(0 0 30px rgba(255,100,0,0.2));
+  animation: productFloat 4s ease-in-out infinite;
+}
+@keyframes productFloat {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-12px); }
+}
+
 </style>
 </head>
 <body>
@@ -1353,6 +1388,11 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
       loading="lazy"
       scrolling="no">
     </iframe>
+    <!-- 실제 제품 이미지 오버레이 -->
+    <div class="virtual-product-overlay">
+      <img src="./images/product_render.png"
+           alt="Calcifer 제품" />
+    </div>
   </div>
 
 </section>
@@ -1604,179 +1644,135 @@ new IntersectionObserver((entries) => {
 })();
 
 
-// ── AMBIENT CAMPFIRE SOUND ──
+// ── CAMPFIRE SOUND (실제 MP3) ──
 (function() {
-  let audioCtx = null;
-  let masterGain = null;
-  let isPlaying = false;
-  let nodes = [];
-  let tooltipTimer = null;
-
-  const btn = document.getElementById('sound-btn');
+  const audio   = document.getElementById('campfire-audio');
+  const btn     = document.getElementById('sound-btn');
   const tooltip = document.getElementById('sound-tooltip');
+  let isPlaying = false;
+  let tooltipTimer = null;
+  let userInteracted = false;
 
-  // 첫 방문 시 툴팁 자동 표시
-  setTimeout(() => {
+  audio.volume = 0.7;
+
+  // ── 볼륨 페이드 유틸
+  function fadeIn(duration) {
+    audio.volume = 0;
+    const step = 0.7 / (duration / 50);
+    const iv = setInterval(() => {
+      audio.volume = Math.min(0.7, audio.volume + step);
+      if (audio.volume >= 0.7) clearInterval(iv);
+    }, 50);
+  }
+  function fadeOut(duration, cb) {
+    const start = audio.volume;
+    const step = start / (duration / 50);
+    const iv = setInterval(() => {
+      audio.volume = Math.max(0, audio.volume - step);
+      if (audio.volume <= 0) {
+        clearInterval(iv);
+        audio.pause();
+        audio.currentTime = 0;
+        if (cb) cb();
+      }
+    }, 50);
+  }
+
+  // ── 자동재생 시도 (첫 사용자 인터랙션 전까지 브라우저가 막을 수 있음)
+  function tryAutoplay() {
+    audio.volume = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.then(() => {
+        // 자동재생 성공
+        isPlaying = true;
+        btn.classList.add('playing');
+        btn.textContent = '🔊';
+        fadeIn(2500);
+        tooltip.classList.remove('show');
+      }).catch(() => {
+        // 자동재생 차단됨 → 툴팁 표시로 유도
+        isPlaying = false;
+        showTooltip();
+      });
+    }
+  }
+
+  // ── 페이지 로드 후 자동재생 시도
+  window.addEventListener('load', () => {
+    setTimeout(tryAutoplay, 800);
+  });
+
+  // ── 첫 클릭/터치 시 자동재생 재시도 (브라우저 정책 우회)
+  function onFirstInteraction() {
+    if (!userInteracted && !isPlaying) {
+      userInteracted = true;
+      tryAutoplay();
+    }
+    document.removeEventListener('click', onFirstInteraction);
+    document.removeEventListener('touchstart', onFirstInteraction);
+    document.removeEventListener('keydown', onFirstInteraction);
+    document.removeEventListener('scroll', onFirstInteraction);
+  }
+  document.addEventListener('click',      onFirstInteraction, { once: true });
+  document.addEventListener('touchstart', onFirstInteraction, { once: true });
+  document.addEventListener('keydown',    onFirstInteraction, { once: true });
+  document.addEventListener('scroll',     onFirstInteraction, { once: true, passive: true });
+
+  // ── 툴팁
+  function showTooltip() {
     tooltip.classList.add('show');
-    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 4000);
-  }, 2500);
+    clearTimeout(tooltipTimer);
+    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 5000);
+  }
 
   btn.addEventListener('mouseenter', () => {
     clearTimeout(tooltipTimer);
-    tooltip.classList.add('show');
+    if (!isPlaying) tooltip.classList.add('show');
   });
   btn.addEventListener('mouseleave', () => {
     tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 800);
   });
 
-  function initAudio() {
-    if (audioCtx) return;
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    masterGain.connect(audioCtx.destination);
-  }
-
-  // ── 화이트/브라운 노이즈 (장작 베이스 소리)
-  function createCrackleNoise() {
-    const bufferSize = audioCtx.sampleRate * 4;
-    const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-    const data = buffer.getChannelData(0);
-
-    let b0=0, b1=0, b2=0, b3=0, b4=0, b5=0, b6=0;
-    for (let i = 0; i < bufferSize; i++) {
-      const white = Math.random() * 2 - 1;
-      // 핑크 노이즈 (장작 타는 소리에 가까운 스펙트럼)
-      b0 = 0.99886*b0 + white*0.0555179;
-      b1 = 0.99332*b1 + white*0.0750759;
-      b2 = 0.96900*b2 + white*0.1538520;
-      b3 = 0.86650*b3 + white*0.3104856;
-      b4 = 0.55000*b4 + white*0.5329522;
-      b5 = -0.7616*b5 - white*0.0168980;
-      data[i] = (b0+b1+b2+b3+b4+b5+b6 + white*0.5362) * 0.11;
-      b6 = white * 0.115926;
-    }
-
-    const source = audioCtx.createBufferSource();
-    source.buffer = buffer;
-    source.loop = true;
-
-    // 저음 강조 (장작 불 느낌)
-    const lowpass = audioCtx.createBiquadFilter();
-    lowpass.type = 'lowpass';
-    lowpass.frequency.value = 800;
-    lowpass.Q.value = 0.8;
-
-    const highpass = audioCtx.createBiquadFilter();
-    highpass.type = 'highpass';
-    highpass.frequency.value = 60;
-
-    // 게인
-    const gain = audioCtx.createGain();
-    gain.gain.value = 0.55;
-
-    source.connect(lowpass);
-    lowpass.connect(highpass);
-    highpass.connect(gain);
-    gain.connect(masterGain);
-    source.start();
-    return { source, gain };
-  }
-
-  // ── 팝 & 크랙클 (장작 튀는 소리)
-  function scheduleCrackle() {
-    if (!isPlaying) return;
-
-    const now = audioCtx.currentTime;
-    // 랜덤 주파수의 짧은 버스트
-    const osc = audioCtx.createOscillator();
-    const oscGain = audioCtx.createGain();
-    const filter = audioCtx.createBiquadFilter();
-
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(80 + Math.random() * 200, now);
-    osc.frequency.exponentialRampToValueAtTime(40, now + 0.08);
-
-    filter.type = 'bandpass';
-    filter.frequency.value = 300 + Math.random() * 400;
-    filter.Q.value = 0.5;
-
-    const vol = 0.03 + Math.random() * 0.06;
-    oscGain.gain.setValueAtTime(vol, now);
-    oscGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.06 + Math.random() * 0.1);
-
-    osc.connect(filter);
-    filter.connect(oscGain);
-    oscGain.connect(masterGain);
-
-    osc.start(now);
-    osc.stop(now + 0.15);
-
-    // 다음 크랙클 예약 (불규칙 간격)
-    const nextTime = 0.15 + Math.random() * 0.9;
-    setTimeout(scheduleCrackle, nextTime * 1000);
-  }
-
-  // ── 사운드 시작
-  function startSound() {
-    initAudio();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-
-    // 베이스 노이즈
-    const crackle = createCrackleNoise();
-    nodes.push(crackle);
-
-    // 볼륨 페이드인
-    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(0.9, audioCtx.currentTime + 2.5);
-
-    // 크랙클 시작
-    setTimeout(scheduleCrackle, 800);
-
-    isPlaying = true;
-    btn.classList.add('playing');
-    btn.textContent = '🔊';
-    tooltip.classList.remove('show');
-  }
-
-  // ── 사운드 정지
-  function stopSound() {
-    if (!audioCtx) return;
-
-    // 볼륨 페이드아웃
-    masterGain.gain.cancelScheduledValues(audioCtx.currentTime);
-    masterGain.gain.setValueAtTime(masterGain.gain.value, audioCtx.currentTime);
-    masterGain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 1.5);
-
-    setTimeout(() => {
-      nodes.forEach(n => {
-        try { n.source.stop(); } catch(e) {}
-      });
-      nodes = [];
-    }, 1600);
-
-    isPlaying = false;
-    btn.classList.remove('playing');
-    btn.textContent = '🔥';
-  }
-
-  // ── 버튼 토글
+  // ── 버튼 On/Off 토글
   btn.addEventListener('click', () => {
     if (isPlaying) {
-      stopSound();
+      // 끄기 — 페이드아웃
+      fadeOut(1500, () => {
+        isPlaying = false;
+        btn.classList.remove('playing');
+        btn.textContent = '🔥';
+      });
     } else {
-      startSound();
+      // 켜기 — 페이드인
+      audio.play().then(() => {
+        isPlaying = true;
+        btn.classList.add('playing');
+        btn.textContent = '🔊';
+        fadeIn(2000);
+        tooltip.classList.remove('show');
+        userInteracted = true;
+      }).catch(e => console.log('play error:', e));
     }
   });
 
-  // 페이지 벗어날 때 정지
+  // ── 탭 숨김 시 일시정지, 복귀 시 재생
   document.addEventListener('visibilitychange', () => {
-    if (document.hidden && isPlaying) stopSound();
+    if (document.hidden) {
+      if (isPlaying) audio.pause();
+    } else {
+      if (isPlaying) audio.play();
+    }
   });
 })();
 
 </script>
+
+
+<!-- CAMPFIRE AUDIO -->
+<audio id="campfire-audio" loop preload="auto">
+  <source src="./fire.mp3" type="audio/mpeg">
+</audio>
 
 <!-- AMBIENT SOUND BUTTON -->
 <button id="sound-btn" title="장작 소리 켜기/끄기">🔥</button>
