@@ -1866,96 +1866,106 @@ new IntersectionObserver((entries) => {
 
 // ── CAMPFIRE SOUND ──
 (function() {
-  const audio   = document.getElementById('campfire-audio');
-  const btn     = document.getElementById('sound-btn');
-  const tooltip = document.getElementById('sound-tooltip');
-  let isPlaying = false;
-  let tooltipTimer = null;
+  const audio = document.getElementById('campfire-audio');
+  const btn   = document.getElementById('sound-btn');
+  const tip   = document.getElementById('sound-tooltip');
+  let playing = false;
+  let tipTimer = null;
+  let autoTried = false;
 
-  audio.volume = 0.7;
+  audio.volume = 0;
   audio.loop   = true;
 
-  function fadeIn(sec) {
-    audio.volume = 0;
-    const target = 0.7, step = target / (sec*20);
+  // 페이드인
+  function fadeIn() {
+    let v = 0;
     const iv = setInterval(() => {
-      if (audio.volume + step >= target) { audio.volume = target; clearInterval(iv); }
-      else audio.volume += step;
-    }, 50);
+      v = Math.min(0.75, v + 0.03);
+      audio.volume = v;
+      if (v >= 0.75) clearInterval(iv);
+    }, 60);
   }
-  function fadeOut(sec, cb) {
-    const step = audio.volume / (sec*20);
+
+  // 페이드아웃 후 pause
+  function fadeOut(done) {
     const iv = setInterval(() => {
-      if (audio.volume - step <= 0) {
-        audio.volume = 0; audio.pause(); clearInterval(iv);
-        if (cb) cb();
-      } else audio.volume -= step;
-    }, 50);
+      audio.volume = Math.max(0, audio.volume - 0.05);
+      if (audio.volume <= 0) {
+        clearInterval(iv);
+        audio.pause();
+        if (done) done();
+      }
+    }, 60);
   }
 
-  function startSound() {
+  // 켜기
+  function turnOn() {
     audio.play().then(() => {
-      isPlaying = true;
-      btn.classList.add('playing');
+      playing = true;
       btn.textContent = '🔊';
-      tooltip.classList.remove('show');
-      fadeIn(2.5);
-    }).catch(()=>{});
-  }
-  function stopSound() {
-    fadeOut(1.5, () => {
-      isPlaying = false;
-      btn.classList.remove('playing');
-      btn.textContent = '🔥';
-    });
-  }
-
-  // 첫 인터랙션 시 자동재생
-  let tried = false;
-  function tryOnce() {
-    if (tried) return;
-    tried = true;
-    startSound();
-    ['click','touchstart','scroll','keydown'].forEach(e =>
-      document.removeEventListener(e, tryOnce));
-  }
-  setTimeout(() => {
-    audio.play().then(() => {
-      isPlaying = true;
       btn.classList.add('playing');
-      btn.textContent = '🔊';
-      fadeIn(2.5);
-      tried = true;
-    }).catch(() => {
-      // 자동재생 차단 → 첫 인터랙션 대기
-      tooltip.classList.add('show');
-      tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 5000);
-      ['click','touchstart','scroll','keydown'].forEach(e =>
-        document.addEventListener(e, tryOnce, {once:true, passive:true}));
-    });
-  }, 800);
+      tip.classList.remove('show');
+      fadeIn();
+    }).catch(() => {});
+  }
 
-  // ★ On/Off 버튼 — 항상 작동
-  btn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (isPlaying) {
-      stopSound();
-    } else {
-      startSound();
-    }
+  // 끄기
+  function turnOff() {
+    playing = false;
+    btn.textContent = '🔥';
+    btn.classList.remove('playing');
+    fadeOut();
+  }
+
+  // ★ 버튼 — 가장 단순하게
+  btn.onclick = function() {
+    if (playing) turnOff();
+    else turnOn();
+  };
+
+  // 자동재생 (페이지 로드 후)
+  window.addEventListener('load', function() {
+    setTimeout(function() {
+      audio.play().then(function() {
+        playing = true;
+        btn.textContent = '🔊';
+        btn.classList.add('playing');
+        autoTried = true;
+        fadeIn();
+      }).catch(function() {
+        // 자동재생 차단 → 첫 스크롤/클릭 시 시작
+        autoTried = false;
+        tip.classList.add('show');
+        tipTimer = setTimeout(() => tip.classList.remove('show'), 5000);
+
+        function firstInteract(e) {
+          // 버튼 클릭은 onclick이 처리하므로 여기선 제외
+          if (e.target === btn || btn.contains(e.target)) return;
+          if (autoTried) return;
+          autoTried = true;
+          document.removeEventListener('scroll', firstInteract, true);
+          document.removeEventListener('click',  firstInteract, true);
+          turnOn();
+        }
+        document.addEventListener('scroll', firstInteract, { once: false, passive: true, capture: true });
+        document.addEventListener('click',  firstInteract, { once: false, capture: true });
+      });
+    }, 1000);
   });
 
-  btn.addEventListener('mouseenter', () => {
-    clearTimeout(tooltipTimer);
-    tooltip.classList.add('show');
-  });
-  btn.addEventListener('mouseleave', () => {
-    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 800);
+  // 탭 전환 시 처리
+  document.addEventListener('visibilitychange', function() {
+    if (document.hidden) { if (playing) audio.pause(); }
+    else                 { if (playing) audio.play(); }
   });
 
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) { if(isPlaying) audio.pause(); }
-    else { if(isPlaying) audio.play(); }
+  // 툴팁 hover
+  btn.addEventListener('mouseenter', function() {
+    clearTimeout(tipTimer);
+    tip.classList.add('show');
+  });
+  btn.addEventListener('mouseleave', function() {
+    tipTimer = setTimeout(() => tip.classList.remove('show'), 800);
   });
 })();
 
