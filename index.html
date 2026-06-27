@@ -947,33 +947,188 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
 }
 
 
-/* ── VIRTUAL DEVICE 제품 오버레이 ── */
-.virtual-product-overlay {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 42%;
-  height: 100%;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  background: #0d0d0d;
+/* ── VIRTUAL DEVICE (자체 디자인) ── */
+#virtual-section {
+  background: #0a0604;
+  padding: 80px 0 0;
+  overflow: hidden;
 }
-.virtual-product-overlay img {
-  width: 55%;
+.virtual-header {
+  text-align: center; padding: 0 40px 48px;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.7s, transform 0.7s;
+}
+.virtual-header.visible { opacity: 1; transform: translateY(0); }
+.virtual-eyebrow {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.2em;
+  text-transform: uppercase; color: #FF7A00; margin-bottom: 10px;
+}
+.virtual-title {
+  font-size: clamp(28px,3.5vw,48px); font-weight: 700; color: #fff;
+  margin-bottom: 14px;
+}
+.virtual-desc { font-size: 14px; color: rgba(255,255,255,0.5); line-height: 1.7; }
+
+/* 메인 레이아웃 */
+.vd-wrap {
+  display: grid;
+  grid-template-columns: 420px 1fr;
+  min-height: 600px;
+  background: #0d0f1a;
+}
+
+/* 왼쪽: 컨트롤 패널 */
+.vd-panel {
+  background: #12151f;
+  padding: 36px 32px;
+  border-right: 1px solid rgba(255,255,255,0.06);
+  overflow-y: auto;
+  max-height: 720px;
+}
+.vd-panel-title {
+  font-size: 13px; font-weight: 700; color: #fff;
+  letter-spacing: 0.15em; text-transform: uppercase;
+  margin-bottom: 28px; text-align: center;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+
+/* 컨트롤 그룹 */
+.vd-group { margin-bottom: 28px; }
+.vd-group-label {
+  font-size: 12px; color: rgba(255,255,255,0.5);
+  margin-bottom: 10px; display: flex; align-items: center; gap: 6px;
+}
+.vd-group-label span { font-size: 15px; }
+
+/* 텐트 크기 버튼 */
+.vd-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.vd-btn {
+  padding: 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);
+  background: #1c2030; color: rgba(255,255,255,0.7);
+  font-size: 13px; cursor: pointer;
+  transition: all 0.2s;
+}
+.vd-btn:hover { border-color: #5b6fd6; color: #fff; }
+.vd-btn.active { background: #5b6fd6; border-color: #5b6fd6; color: #fff; font-weight: 700; }
+
+/* 토글 스위치 */
+.vd-toggle-row {
+  display: flex; align-items: center; justify-content: space-between;
+}
+.vd-toggle {
+  width: 52px; height: 28px; border-radius: 14px;
+  background: #333; border: none; cursor: pointer;
+  position: relative; transition: background 0.3s;
+}
+.vd-toggle.on { background: #22c55e; }
+.vd-toggle::after {
+  content: ''; position: absolute;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: #fff; top: 3px; left: 3px;
+  transition: transform 0.3s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.vd-toggle.on::after { transform: translateX(24px); }
+
+/* 배터리 */
+.vd-battery-box {
+  background: #1c2030; border-radius: 8px; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.vd-battery-pct { font-size: 20px; font-weight: 700; color: #22c55e; }
+.vd-battery-charge {
+  background: #22c55e; color: #fff; font-size: 11px; font-weight: 700;
+  padding: 4px 10px; border-radius: 6px;
+}
+
+/* 슬라이더 */
+.vd-slider-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.vd-slider-val { font-size: 13px; font-weight: 700; color: #5b6fd6; }
+.vd-slider {
+  width: 100%; height: 6px; border-radius: 3px;
+  -webkit-appearance: none; appearance: none;
+  background: linear-gradient(to right, #5b6fd6 0%, #5b6fd6 50%, #2a2d3e 50%);
+  outline: none; cursor: pointer;
+}
+.vd-slider::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 20px; height: 20px;
+  border-radius: 50%; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.4); cursor: pointer;
+}
+
+/* 색온도 버튼 */
+.vd-temp-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+
+/* 모드 버튼 */
+.vd-mode-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 6px; }
+.vd-mode-btn-wide { width: 100%; }
+
+/* 오른쪽: 제품 시각화 */
+.vd-visual {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at 50% 60%, #1a0f04 0%, #0a0604 70%);
+  overflow: hidden;
+  min-height: 600px;
+}
+
+/* 제품 이미지 */
+.vd-product-img {
+  position: relative; z-index: 2;
+  width: 45%; max-width: 280px;
   height: auto;
-  object-fit: contain;
-  /* 투명 PNG 그대로 — 블렌드 없음 */
-  filter: drop-shadow(0 20px 50px rgba(255,140,30,0.4))
-          drop-shadow(0 0 24px rgba(255,100,0,0.25));
-  animation: productFloat 4s ease-in-out infinite;
+  animation: vdFloat 4s ease-in-out infinite;
+  transition: filter 0.5s ease, opacity 0.5s ease;
+  filter: drop-shadow(0 30px 60px rgba(255,130,30,0.5))
+          drop-shadow(0 0 40px rgba(255,100,0,0.3));
 }
-@keyframes productFloat {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-12px); }
+@keyframes vdFloat {
+  0%,100% { transform: translateY(0); }
+  50%      { transform: translateY(-14px); }
 }
+
+/* 전원 OFF 상태 */
+.vd-visual.power-off .vd-product-img {
+  filter: brightness(0.15) drop-shadow(0 0 0px transparent);
+  animation: none;
+}
+
+/* 바닥 글로우 */
+.vd-glow {
+  position: absolute; bottom: 10%; left: 50%; transform: translateX(-50%);
+  width: 50%; height: 80px; z-index: 1;
+  background: radial-gradient(ellipse, rgba(255,120,20,0.5) 0%, transparent 70%);
+  transition: opacity 0.5s;
+  filter: blur(8px);
+}
+.vd-visual.power-off .vd-glow { opacity: 0; }
+
+/* 파티클 불빛 효과 */
+.vd-particles {
+  position: absolute; inset: 0; z-index: 1; pointer-events: none;
+  overflow: hidden;
+}
+.vd-spark {
+  position: absolute; bottom: 40%;
+  width: 3px; height: 3px; border-radius: 50%;
+  background: #FF7A00; opacity: 0;
+  animation: sparkRise 2s ease-out infinite;
+}
+@keyframes sparkRise {
+  0%   { opacity: 0.8; transform: translateY(0) translateX(0) scale(1); }
+  100% { opacity: 0;   transform: translateY(-120px) translateX(var(--dx)) scale(0.3); }
+}
+
+/* 상태 정보 — 우측 하단 */
+.vd-status {
+  position: absolute; bottom: 24px; right: 24px; z-index: 3;
+  text-align: right;
+}
+.vd-status-item {
+  font-size: 11px; color: rgba(255,255,255,0.4);
+  margin-bottom: 4px; letter-spacing: 0.05em;
+}
+.vd-status-item strong { color: rgba(255,255,255,0.75); }
 
 </style>
 </head>
@@ -1363,30 +1518,103 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
 
 <!-- VIRTUAL DEVICE -->
 <section id="virtual-section">
-
   <div class="virtual-header" id="virtual-header">
     <p class="virtual-eyebrow">Interactive Experience</p>
     <h2 class="virtual-title">가상기기 체험</h2>
-    <p class="virtual-desc">
-      실제 Calcifer를 직접 조작해보세요.<br>
-      조명 밝기, 색온도, 모드, 볼륨을 자유롭게 제어할 수 있습니다.
-    </p>
+    <p class="virtual-desc">실제 Calcifer를 직접 조작해보세요.<br>조명 밝기, 색온도, 모드, 볼륨을 자유롭게 제어할 수 있습니다.</p>
   </div>
 
-  <div class="virtual-iframe-wrap" id="virtual-iframe-wrap">
-    <div class="virtual-fade-top"></div>
-    <iframe
-      src="https://caffeineworks-ai.github.io/calcifier/calcifier.html"
-      title="Calcifer 가상기기"
-      allow="autoplay; fullscreen"
-      loading="lazy"
-      scrolling="no">
-    </iframe>
-    <div class="virtual-product-overlay">
-      <img src="./images/product_render.png" alt="Calcifer 제품" />
+  <div class="vd-wrap">
+    <!-- 왼쪽: 컨트롤 패널 -->
+    <div class="vd-panel">
+      <div class="vd-panel-title">⛺ Calcifer 가상기기</div>
+
+      <!-- 텐트 크기 -->
+      <div class="vd-group">
+        <div class="vd-group-label"><span>⛺</span> 텐트 크기</div>
+        <div class="vd-btns">
+          <button class="vd-btn active" data-tent="1">1인용</button>
+          <button class="vd-btn" data-tent="2">2인용</button>
+          <button class="vd-btn" data-tent="3">3~4인용</button>
+          <button class="vd-btn" data-tent="5">5인 이상</button>
+        </div>
+      </div>
+
+      <!-- 전원 -->
+      <div class="vd-group">
+        <div class="vd-toggle-row">
+          <div class="vd-group-label"><span>🔌</span> 전원 ON / OFF</div>
+          <button class="vd-toggle on" id="vd-power"></button>
+        </div>
+      </div>
+
+      <!-- 배터리 -->
+      <div class="vd-group">
+        <div class="vd-group-label"><span>🔋</span> 배터리 잔량 <small style="color:rgba(255,255,255,0.3)">(밝기에 따라 감소 속도 가변)</small></div>
+        <div class="vd-battery-box">
+          <span class="vd-battery-pct" id="vd-battery-pct">100.0%</span>
+          <span class="vd-battery-charge">⚡ 100% 충전</span>
+        </div>
+      </div>
+
+      <!-- 조명 밝기 -->
+      <div class="vd-group">
+        <div class="vd-slider-row">
+          <div class="vd-group-label"><span>💡</span> 조명 밝기</div>
+          <span class="vd-slider-val" id="vd-bright-val">40%</span>
+        </div>
+        <input class="vd-slider" id="vd-bright" type="range" min="0" max="100" value="40">
+      </div>
+
+      <!-- 색온도 -->
+      <div class="vd-group">
+        <div class="vd-group-label"><span>🌡️</span> 색온도</div>
+        <div class="vd-temp-btns">
+          <button class="vd-btn active" data-temp="2700">2700K (전구)</button>
+          <button class="vd-btn" data-temp="5500">5500K (주백)</button>
+          <button class="vd-btn" data-temp="6000">6000K (주광)</button>
+        </div>
+      </div>
+
+      <!-- 모드 -->
+      <div class="vd-group">
+        <div class="vd-group-label"><span>⚙️</span> 현재 모드</div>
+        <div class="vd-mode-btns">
+          <button class="vd-btn active" data-mode="normal">일반</button>
+          <button class="vd-btn" data-mode="sleep">취침</button>
+          <button class="vd-btn" data-mode="read">독서</button>
+        </div>
+        <button class="vd-btn vd-mode-btn-wide" data-mode="wake">기상</button>
+      </div>
+
+      <!-- 볼륨 -->
+      <div class="vd-group">
+        <div class="vd-slider-row">
+          <div class="vd-group-label"><span>🔊</span> 장작 모닥불 볼륨</div>
+          <span class="vd-slider-val" id="vd-vol-val">30%</span>
+        </div>
+        <input class="vd-slider" id="vd-vol" type="range" min="0" max="100" value="30">
+      </div>
+    </div>
+
+    <!-- 오른쪽: 제품 시각화 -->
+    <div class="vd-visual" id="vd-visual">
+      <!-- 파티클 -->
+      <div class="vd-particles" id="vd-particles"></div>
+      <!-- 바닥 글로우 -->
+      <div class="vd-glow" id="vd-glow"></div>
+      <!-- 실제 제품 이미지 -->
+      <img class="vd-product-img" id="vd-product"
+        src="./images/calcifer_product.png"
+        alt="Calcifer" />
+      <!-- 상태 정보 -->
+      <div class="vd-status">
+        <div class="vd-status-item">밝기 <strong id="vd-stat-bright">40%</strong></div>
+        <div class="vd-status-item">색온도 <strong id="vd-stat-temp">2700K</strong></div>
+        <div class="vd-status-item">모드 <strong id="vd-stat-mode">일반</strong></div>
+      </div>
     </div>
   </div>
-
 </section>
 
 
@@ -1636,126 +1864,268 @@ new IntersectionObserver((entries) => {
 })();
 
 
-// ── CAMPFIRE SOUND (실제 MP3) ──
+// ── CAMPFIRE SOUND ──
 (function() {
   const audio   = document.getElementById('campfire-audio');
   const btn     = document.getElementById('sound-btn');
   const tooltip = document.getElementById('sound-tooltip');
   let isPlaying = false;
   let tooltipTimer = null;
-  let userInteracted = false;
 
   audio.volume = 0.7;
+  audio.loop   = true;
 
-  // ── 볼륨 페이드 유틸
-  function fadeIn(duration) {
+  function fadeIn(sec) {
     audio.volume = 0;
-    const step = 0.7 / (duration / 50);
+    const target = 0.7, step = target / (sec*20);
     const iv = setInterval(() => {
-      audio.volume = Math.min(0.7, audio.volume + step);
-      if (audio.volume >= 0.7) clearInterval(iv);
+      if (audio.volume + step >= target) { audio.volume = target; clearInterval(iv); }
+      else audio.volume += step;
     }, 50);
   }
-  function fadeOut(duration, cb) {
-    const start = audio.volume;
-    const step = start / (duration / 50);
+  function fadeOut(sec, cb) {
+    const step = audio.volume / (sec*20);
     const iv = setInterval(() => {
-      audio.volume = Math.max(0, audio.volume - step);
-      if (audio.volume <= 0) {
-        clearInterval(iv);
-        audio.pause();
-        audio.currentTime = 0;
+      if (audio.volume - step <= 0) {
+        audio.volume = 0; audio.pause(); clearInterval(iv);
         if (cb) cb();
-      }
+      } else audio.volume -= step;
     }, 50);
   }
 
-  // ── 자동재생 시도 (첫 사용자 인터랙션 전까지 브라우저가 막을 수 있음)
-  function tryAutoplay() {
-    audio.volume = 0;
-    const playPromise = audio.play();
-    if (playPromise !== undefined) {
-      playPromise.then(() => {
-        // 자동재생 성공
-        isPlaying = true;
-        btn.classList.add('playing');
-        btn.textContent = '🔊';
-        fadeIn(2500);
-        tooltip.classList.remove('show');
-      }).catch(() => {
-        // 자동재생 차단됨 → 툴팁 표시로 유도
-        isPlaying = false;
-        showTooltip();
-      });
-    }
+  function startSound() {
+    audio.play().then(() => {
+      isPlaying = true;
+      btn.classList.add('playing');
+      btn.textContent = '🔊';
+      tooltip.classList.remove('show');
+      fadeIn(2.5);
+    }).catch(()=>{});
+  }
+  function stopSound() {
+    fadeOut(1.5, () => {
+      isPlaying = false;
+      btn.classList.remove('playing');
+      btn.textContent = '🔥';
+    });
   }
 
-  // ── 페이지 로드 후 자동재생 시도
-  window.addEventListener('load', () => {
-    setTimeout(tryAutoplay, 800);
+  // 첫 인터랙션 시 자동재생
+  let tried = false;
+  function tryOnce() {
+    if (tried) return;
+    tried = true;
+    startSound();
+    ['click','touchstart','scroll','keydown'].forEach(e =>
+      document.removeEventListener(e, tryOnce));
+  }
+  setTimeout(() => {
+    audio.play().then(() => {
+      isPlaying = true;
+      btn.classList.add('playing');
+      btn.textContent = '🔊';
+      fadeIn(2.5);
+      tried = true;
+    }).catch(() => {
+      // 자동재생 차단 → 첫 인터랙션 대기
+      tooltip.classList.add('show');
+      tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 5000);
+      ['click','touchstart','scroll','keydown'].forEach(e =>
+        document.addEventListener(e, tryOnce, {once:true, passive:true}));
+    });
+  }, 800);
+
+  // ★ On/Off 버튼 — 항상 작동
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (isPlaying) {
+      stopSound();
+    } else {
+      startSound();
+    }
   });
-
-  // ── 첫 클릭/터치 시 자동재생 재시도 (브라우저 정책 우회)
-  function onFirstInteraction() {
-    if (!userInteracted && !isPlaying) {
-      userInteracted = true;
-      tryAutoplay();
-    }
-    document.removeEventListener('click', onFirstInteraction);
-    document.removeEventListener('touchstart', onFirstInteraction);
-    document.removeEventListener('keydown', onFirstInteraction);
-    document.removeEventListener('scroll', onFirstInteraction);
-  }
-  document.addEventListener('click',      onFirstInteraction, { once: true });
-  document.addEventListener('touchstart', onFirstInteraction, { once: true });
-  document.addEventListener('keydown',    onFirstInteraction, { once: true });
-  document.addEventListener('scroll',     onFirstInteraction, { once: true, passive: true });
-
-  // ── 툴팁
-  function showTooltip() {
-    tooltip.classList.add('show');
-    clearTimeout(tooltipTimer);
-    tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 5000);
-  }
 
   btn.addEventListener('mouseenter', () => {
     clearTimeout(tooltipTimer);
-    if (!isPlaying) tooltip.classList.add('show');
+    tooltip.classList.add('show');
   });
   btn.addEventListener('mouseleave', () => {
     tooltipTimer = setTimeout(() => tooltip.classList.remove('show'), 800);
   });
 
-  // ── 버튼 On/Off 토글
-  btn.addEventListener('click', () => {
-    if (isPlaying) {
-      // 끄기 — 페이드아웃
-      fadeOut(1500, () => {
-        isPlaying = false;
-        btn.classList.remove('playing');
-        btn.textContent = '🔥';
-      });
-    } else {
-      // 켜기 — 페이드인
-      audio.play().then(() => {
-        isPlaying = true;
-        btn.classList.add('playing');
-        btn.textContent = '🔊';
-        fadeIn(2000);
-        tooltip.classList.remove('show');
-        userInteracted = true;
-      }).catch(e => console.log('play error:', e));
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) { if(isPlaying) audio.pause(); }
+    else { if(isPlaying) audio.play(); }
+  });
+})();
+
+
+// ── 가상기기 인터랙션 ──
+(function() {
+  const visual    = document.getElementById('vd-visual');
+  const product   = document.getElementById('vd-product');
+  const glow      = document.getElementById('vd-glow');
+  const particles = document.getElementById('vd-particles');
+  const powerBtn  = document.getElementById('vd-power');
+  const brightSlider = document.getElementById('vd-bright');
+  const brightVal    = document.getElementById('vd-bright-val');
+  const volSlider    = document.getElementById('vd-vol');
+  const volVal       = document.getElementById('vd-vol-val');
+  const batteryPct   = document.getElementById('vd-battery-pct');
+  const statBright   = document.getElementById('vd-stat-bright');
+  const statTemp     = document.getElementById('vd-stat-temp');
+  const statMode     = document.getElementById('vd-stat-mode');
+
+  let isPower  = true;
+  let battery  = 100.0;
+  let bright   = 40;
+  let temp     = 2700;
+  let mode     = 'normal';
+  let batteryTimer = null;
+
+  // 파티클 생성
+  for (let i = 0; i < 12; i++) {
+    const sp = document.createElement('div');
+    sp.className = 'vd-spark';
+    sp.style.left = (35 + Math.random()*30) + '%';
+    sp.style.animationDelay = (Math.random()*2) + 's';
+    sp.style.animationDuration = (1.5 + Math.random()*1.5) + 's';
+    sp.style.setProperty('--dx', (Math.random()*40-20) + 'px');
+    particles.appendChild(sp);
+  }
+
+  // 밝기에 따라 제품 이미지 + 글로우 업데이트
+  function updateVisual() {
+    if (!isPower) {
+      product.style.filter = 'brightness(0.15)';
+      product.style.animation = 'none';
+      glow.style.opacity = '0';
+      particles.style.opacity = '0';
+      return;
     }
+    const b = bright / 100;
+    // 색온도별 색상
+    const colorMap = { 2700: 'rgba(255,140,30,', 5500: 'rgba(255,210,150,', 6000: 'rgba(200,220,255,' };
+    const c = colorMap[temp] || 'rgba(255,140,30,';
+
+    product.style.filter = `
+      brightness(${0.5 + b*0.6})
+      drop-shadow(0 30px 60px ${c}${b*0.6}))
+      drop-shadow(0 0 40px ${c}${b*0.4}))
+    `;
+    product.style.animation = 'vdFloat 4s ease-in-out infinite';
+    glow.style.background = `radial-gradient(ellipse, ${c}${b*0.65}) 0%, transparent 70%)`;
+    glow.style.opacity = String(b);
+    particles.style.opacity = String(b * 0.9);
+
+    // 배터리 감소 속도 (밝기 높을수록 빠름)
+    clearInterval(batteryTimer);
+    batteryTimer = setInterval(() => {
+      battery = Math.max(0, battery - bright * 0.002);
+      batteryPct.textContent = battery.toFixed(1) + '%';
+      batteryPct.style.color = battery > 30 ? '#22c55e' : battery > 10 ? '#f59e0b' : '#ef4444';
+    }, 1000);
+  }
+
+  // 슬라이더 그라디언트 업데이트
+  function updateSlider(el, val) {
+    el.style.background = `linear-gradient(to right, #5b6fd6 0%, #5b6fd6 ${val}%, #2a2d3e ${val}%)`;
+  }
+
+  // 전원 토글
+  powerBtn.addEventListener('click', () => {
+    isPower = !isPower;
+    powerBtn.classList.toggle('on', isPower);
+    visual.classList.toggle('power-off', !isPower);
+    clearInterval(batteryTimer);
+    updateVisual();
   });
 
-  // ── 탭 숨김 시 일시정지, 복귀 시 재생
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden) {
-      if (isPlaying) audio.pause();
-    } else {
-      if (isPlaying) audio.play();
-    }
+  // 밝기 슬라이더
+  brightSlider.addEventListener('input', () => {
+    bright = +brightSlider.value;
+    brightVal.textContent = bright + '%';
+    statBright.textContent = bright + '%';
+    updateSlider(brightSlider, bright);
+    clearInterval(batteryTimer);
+    updateVisual();
   });
+
+  // 볼륨 슬라이더
+  volSlider.addEventListener('input', () => {
+    const v = +volSlider.value;
+    volVal.textContent = v + '%';
+    updateSlider(volSlider, v);
+    // 실제 장작 소리 볼륨도 연동
+    const fireAudio = document.getElementById('campfire-audio');
+    if (fireAudio) fireAudio.volume = v / 100 * 0.9;
+  });
+
+  // 텐트 크기 버튼
+  document.querySelectorAll('[data-tent]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-tent]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      // 텐트 크기에 따라 밝기 자동 조절
+      const tent = +btn.dataset.tent;
+      const brightMap = {1:30, 2:50, 3:70, 5:100};
+      bright = brightMap[tent] || 50;
+      brightSlider.value = bright;
+      brightVal.textContent = bright + '%';
+      statBright.textContent = bright + '%';
+      updateSlider(brightSlider, bright);
+      updateVisual();
+    });
+  });
+
+  // 색온도 버튼
+  document.querySelectorAll('[data-temp]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-temp]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      temp = +btn.dataset.temp;
+      statTemp.textContent = temp + 'K';
+      updateVisual();
+    });
+  });
+
+  // 모드 버튼
+  const modeNames = { normal:'일반', sleep:'취침', read:'독서', wake:'기상' };
+  const modePresets = {
+    normal: { bright:40 },
+    sleep:  { bright:10 },
+    read:   { bright:80 },
+    wake:   { bright:100 },
+  };
+  document.querySelectorAll('[data-mode]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mode]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      statMode.textContent = modeNames[mode];
+      const preset = modePresets[mode];
+      if (preset) {
+        bright = preset.bright;
+        brightSlider.value = bright;
+        brightVal.textContent = bright + '%';
+        statBright.textContent = bright + '%';
+        updateSlider(brightSlider, bright);
+      }
+      updateVisual();
+    });
+  });
+
+  // 초기화
+  updateSlider(brightSlider, bright);
+  updateSlider(volSlider, 30);
+  updateVisual();
+
+  // IntersectionObserver 등록
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+  }, {threshold:0.1});
+  const hdr = document.getElementById('virtual-header');
+  if (hdr) obs.observe(hdr);
 })();
 
 </script>
