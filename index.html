@@ -947,14 +947,9 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
 }
 
 
-/* ── VIRTUAL DEVICE 제품 이미지 오버레이 ── */
-.virtual-iframe-wrap {
-  position: relative;
-}
-/* iframe 오른쪽 절반 위에 실제 제품 이미지 오버레이 */
+/* ── VIRTUAL DEVICE 제품 오버레이 ── */
 .virtual-product-overlay {
   position: absolute;
-  /* 가상기기 오른쪽 영역에 배치 — 스크린샷 기준 우측 40% */
   right: 0;
   top: 0;
   width: 42%;
@@ -963,17 +958,16 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
   display: flex;
   align-items: center;
   justify-content: center;
-  pointer-events: none;  /* 클릭은 iframe으로 통과 */
-  background: #0d0d0d;   /* 기존 검정 배경과 동일하게 */
+  pointer-events: none;
+  background: #0d0d0d;
 }
 .virtual-product-overlay img {
-  width: 62%;
+  width: 55%;
   height: auto;
   object-fit: contain;
-  /* 제품 이미지 흰 배경 제거 효과 */
-  mix-blend-mode: multiply;
-  filter: drop-shadow(0 20px 60px rgba(255,140,30,0.35))
-          drop-shadow(0 0 30px rgba(255,100,0,0.2));
+  /* 투명 PNG 그대로 — 블렌드 없음 */
+  filter: drop-shadow(0 20px 50px rgba(255,140,30,0.4))
+          drop-shadow(0 0 24px rgba(255,100,0,0.25));
   animation: productFloat 4s ease-in-out infinite;
 }
 @keyframes productFloat {
@@ -1388,10 +1382,8 @@ body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #111; color
       loading="lazy"
       scrolling="no">
     </iframe>
-    <!-- 실제 제품 이미지 오버레이 -->
     <div class="virtual-product-overlay">
-      <img src="./images/product_render.png"
-           alt="Calcifer 제품" />
+      <img src="./images/product_render.png" alt="Calcifer 제품" />
     </div>
   </div>
 
